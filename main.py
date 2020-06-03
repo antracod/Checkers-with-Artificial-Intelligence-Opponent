@@ -27,8 +27,8 @@ def drawBoardPieces(board,screen):
                     color =  PLAYER2_COLOR_KING
                 else:
                     continue
-                rect = pygame.Rect(y*block_size, x*block_size, block_size, block_size)
-                pygame.draw.rect(screen, color, rect)
+                #rect = pygame.circle(y*block_size+10, x*block_size+10, block_size-20, block_size-20)
+                pygame.draw.circle(screen, color,(y*block_size+50, x*block_size+50), 40)
 
 def getAlgorithmFromInput():
 	algorithm = None
@@ -182,24 +182,24 @@ def startgame(algorithm,humanPlayerColor,depth,ui):
 			print("AI TURN :")
 			moveSpree = True
 			moveSpreeStarted = False
-			
+			timpStartProcesAi = time.time()
 			while moveSpree == True:
 				moveSpree = playerHasSpreeMoves(stare_curenta.tabla_joc,stare_curenta.j_curent)
 				stare_curenta.moveSpree = moveSpree
 				if moveSpreeStarted == True and moveSpree == False:
 					break
 				moveSpreeStarted = moveSpree
+				
 				if(algorithm == 1):
 					newState = min_max(stare_curenta)
 				else:
 					newState = alpha_beta(-5000,5000,stare_curenta) 
 				stare_curenta.tabla_joc = newState.stare_aleasa.tabla_joc
-
+			print("Ai-ul a gandit :" + str(time.time() - timpStartProcesAi) + " secunde")
 			stare_curenta.j_curent = stare_curenta.jucator_opus()
 	
 	
 			
-	
 
 def main():
 	algorithm = getAlgorithmFromInput()
@@ -293,7 +293,6 @@ def main():
 		
 						print(possibleHumanMoves)
 						if([secondX,secondY] not in possibleHumanMoves):
-							print("DADA")
 							repeatInput = True
 							break
 						print("Selectati pe ce pozitie vrei sa mutati: ")
@@ -305,6 +304,7 @@ def main():
 						updateBoard(stare_curenta.tabla_joc.board,(startx,starty),(stopx,stopy),Joc.JMIN)
 						drawEmptyBoard(screen)
 						drawBoardPieces(stare_curenta.tabla_joc.board,screen)
+						lastClicked = False
 						pygame.display.update()
 						if moveSpreeStarted == True and moveSpree == True:
 							repeatInput == True
