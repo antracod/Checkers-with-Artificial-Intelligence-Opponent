@@ -41,13 +41,10 @@ class Joc:
 			finalScoreJmax = self.finalScore(self.JMAX)
 
 			if finalScoreJmax == finalScoreJmin:
-				print("XXXX")
 				return "Joc termin cu o remiza"
 			elif finalScoreJmax > finalScoreJmax:
-				print("@@@@@@@")
 				return self.JMAX
 			else:
-				print("!!!!!!!!")
 				return self.JMIN	
 		return False
 
@@ -353,6 +350,8 @@ def afis_daca_final(stare_curenta):
 
 
 def updateBoard(board,startPosition,endPosition,playerColor):
+	if(board[startPosition[0]][startPosition[1]] == playerColor.upper()):
+		playerColor = playerColor.upper()
 	if (endPosition[0] == 7 and playerColor == "a") or (endPosition[0] == 0 and playerColor == "n"):
 		board[endPosition[0]][endPosition[1]] = playerColor.upper()
 	else:
@@ -402,7 +401,7 @@ def getMoveset(playercolor):
 		
 
 def hasSpreeMove(currentBoard,i,j,playerColor):
-    moveSet = getMoveset(playerColor)
+    moveSet = getMoveset(currentBoard.board[i][j])
     
 
     for m in moveSet:
@@ -432,7 +431,7 @@ def getAllValidMovesets(currentBoard, playerColor ,moveSpree = False):
     tmpBoard = currentBoard.board
     for i in range(0,8):
         for j in range(0,8):
-            if(tmpBoard[i][j] == playerColor):
+            if(tmpBoard[i][j] == playerColor or tmpBoard[i][j] == playerColor.upper()):
                 tmpMoveSet = getSingleValidMoveset(currentBoard,i,j, moveSpree,playerColor)
                 if tmpMoveSet!= []:
                 	allValidMovesets[(i,j)]=tmpMoveSet
@@ -441,7 +440,7 @@ def getAllValidMovesets(currentBoard, playerColor ,moveSpree = False):
 def playerHasSpreeMoves(currentBoard,playerColor):
     for i in range(0,8):
         for j in range(0,8):
-            if(currentBoard.board[i][j] == playerColor and hasSpreeMove(currentBoard,i,j,playerColor)):
+            if((currentBoard.board[i][j] == playerColor or currentBoard.board[i][j] == playerColor.upper()) and hasSpreeMove(currentBoard,i,j,playerColor)):
                 return True
     return False
     

@@ -94,8 +94,7 @@ def validPlayerInput(stare_curenta):
 		print("Selecteaza coloana:")
 		stopy = int(input())
 		updateBoard(stare_curenta.tabla_joc.board,(startx,starty),(stopx,stopy),Joc.JMIN)
-		#startUI()
-		#drawBoard(stare_curenta.tabla_joc.board)
+	
 	 		
 
 def playerStatusInput():
@@ -143,7 +142,8 @@ def startgame(algorithm,humanPlayerColor,depth,ui):
 
 	Stare.ADANCIME_MAX = depth
 	stare_curenta = Stare(game, "a", Stare.ADANCIME_MAX)
-	
+	myUI = GUI()
+	myUI.drawEmptyBoard()
 	while True:
 		if afis_daca_final(stare_curenta):
 			break
@@ -151,6 +151,10 @@ def startgame(algorithm,humanPlayerColor,depth,ui):
 		if stare_curenta.j_curent ==  Joc.JMIN:
 			playerStatusInput()
 			validPlayerInput(stare_curenta)
+
+			
+			myUI.drawEmptyBoard()
+			myUI.drawBoardPieces(stare_curenta.tabla_joc.board)
 			stare_curenta.j_curent = stare_curenta.jucator_opus()
 		else:
 			print("AI TURN :")
@@ -168,6 +172,8 @@ def startgame(algorithm,humanPlayerColor,depth,ui):
 				else:
 					newState = alpha_beta(-5000,5000,stare_curenta) 
 				stare_curenta.tabla_joc = newState.stare_aleasa.tabla_joc
+			myUI.drawEmptyBoard()
+			myUI.drawBoardPieces(stare_curenta.tabla_joc.board)
 			stare_curenta.j_curent = stare_curenta.jucator_opus()
 			
 	
