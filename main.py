@@ -58,7 +58,7 @@ def getDifficultyFromInput():
 		elif difficulty == "2":
 			return 4
 		elif difficulty == "3":
-			return 5
+			return 6
 		else:
 			print("Input gresit")
 			difficulty = None
@@ -165,7 +165,7 @@ def startgame(algorithm,humanPlayerColor,depth,ui):
 	
 
 	Stare.ADANCIME_MAX = depth
-	stare_curenta = Stare(game, "a", Stare.ADANCIME_MAX)
+	stare_curenta = Stare(game, "n", Stare.ADANCIME_MAX)
               
 	
 	while True:
@@ -218,6 +218,7 @@ def main():
 		board = None
 		game = Joc(board)
 
+
 	
 		Joc.JMIN = humanPlayerColor
 		Joc.JMAX = "n" if humanPlayerColor == "a" else "a"
@@ -269,6 +270,7 @@ def main():
 						stare_curenta.moveSpree = moveSpree
 						if moveSpreeStarted == True and moveSpree == False:
 							break
+							
 						moveSpreeStarted = moveSpree
 
 						print(moveSpree)
@@ -295,12 +297,13 @@ def main():
 						if([secondX,secondY] not in possibleHumanMoves):
 							repeatInput = True
 							break
+   
 						print("Selectati pe ce pozitie vrei sa mutati: ")
 						print("Selecteaza linia:")
 						stopx = secondX
 						print("Selecteaza coloana:")
 						stopy = secondY
-						stare_curenta.j_curent = stare_curenta.jucator_opus()
+						
 						updateBoard(stare_curenta.tabla_joc.board,(startx,starty),(stopx,stopy),Joc.JMIN)
 						drawEmptyBoard(screen)
 						drawBoardPieces(stare_curenta.tabla_joc.board,screen)
@@ -310,14 +313,13 @@ def main():
 							repeatInput == True
 							break
 
-     
 					if(repeatInput == True):
 						continue
-  
+					
 					print("AI TURN :")
 					moveSpree = True
 					moveSpreeStarted = False
-					
+					stare_curenta.j_curent = stare_curenta.jucator_opus()
 					while moveSpree == True:
 						if afis_daca_final(stare_curenta):
 							break

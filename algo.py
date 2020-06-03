@@ -52,13 +52,17 @@ class Joc:
 
 	#mutari Valid
 	def maiExistaMutariTotale(self):
+		blackPiecesLeft = 0
+		whitePiecesLeft = 0
 		for i in range(0,8):
 			for j in range(0,8):
-				if(isPiece(self.board[i][j])):
-					allValidMoveSets1 = getSingleValidMoveset(self,i,j,False,self.board[i][j])
-					allValidMoveSets2 = getSingleValidMoveset(self,i,j,True,self.board[i][j])
-					if len(allValidMoveSets1) > 0  or len(allValidMoveSets2) > 0:
-						return 1
+				if((self.board[i][j]=="n" or self.board[i][j]=="N") ):
+					blackPiecesLeft +=1
+				elif((self.board[i][j]=="a" or self.board[i][j]=="A") ):
+					whitePiecesLeft +=1
+				if whitePiecesLeft and blackPiecesLeft:
+					return 1
+					
 		return 0
      
 	def mutari_joc(self, playerColor):
@@ -72,6 +76,7 @@ class Joc:
 
 		moveSpree = playerHasSpreeMoves(self,playerColor)
 		allValidMoveSets = getAllValidMovesets(self,playerColor,moveSpree)
+
 		return allValidMoveSets
 	#Mutari
 
@@ -266,7 +271,7 @@ def min_max(stare):
 
 	mutari_scor = [min_max(mutare) for mutare in stare.mutari_posibile]
 
-	if stare.j_curent == Joc.JMAX:
+	if stare.j_curent == Joc.JMAX :
 		# daca jucatorul e JMAX aleg starea-fiica cu scorul maxim
 		stare.stare_aleasa = max(mutari_scor, key=lambda x: x.scor)
 	else:
@@ -274,6 +279,7 @@ def min_max(stare):
 		stare.stare_aleasa = min(mutari_scor, key=lambda x: x.scor)
 
 	# actualizez scorul „tatalui” = scorul „fiului” ales
+	
 	stare.scor = stare.stare_aleasa.scor
 	return stare
 
@@ -346,6 +352,7 @@ def afis_daca_final(stare_curenta):
 		if (final == "remiza"):
 			print("Remiza!")
 		else:
+			#CaLCUL PUNCTAJ
 			print("A castigat " + final)
 		return True
 
