@@ -1,6 +1,34 @@
 from algo import *
 from ui import*
 import sys
+import pygame, sys,time
+from pygame.locals import * 
+
+
+def drawEmptyBoard(screen):
+        for x in range(height):
+            for y in range(width):
+                rect = pygame.Rect(x*block_size, y*block_size, block_size, block_size)
+                if (x+y)%2 == 0:
+                    color = BLACK
+                else:
+                    color = GRAY
+                pygame.draw.rect(screen, color, rect)
+def drawBoardPieces(board,screen):
+        for x in range(height):
+            for y in range(width):
+                if board[x][y] == "a":
+                    color =  PLAYER1_COLOR_PIECE
+                elif board[x][y] == "A":
+                    color =  PLAYER1_COLOR_KING
+                elif board[x][y] == "n":
+                    color =  PLAYER2_COLOR_PIECE
+                elif board[x][y] == "N":
+                    color =  PLAYER2_COLOR_KING
+                else:
+                    continue
+                rect = pygame.Rect(y*block_size, x*block_size, block_size, block_size)
+                pygame.draw.rect(screen, color, rect)
 
 def getAlgorithmFromInput():
 	algorithm = None
@@ -123,13 +151,9 @@ def getInterfaceType():
 		
 
 
-
 def startgame(algorithm,humanPlayerColor,depth,ui):
 	board = None
 	game = Joc(board)
-	
-	print(game.finalScore("n"))
-	print(game.finalScore("a"))
 	
 	print("Board initial: ")
 	
@@ -142,9 +166,10 @@ def startgame(algorithm,humanPlayerColor,depth,ui):
 
 	Stare.ADANCIME_MAX = depth
 	stare_curenta = Stare(game, "a", Stare.ADANCIME_MAX)
-	myUI = GUI()
-	myUI.drawEmptyBoard()
+              
+	
 	while True:
+		
 		if afis_daca_final(stare_curenta):
 			break
 
@@ -152,9 +177,6 @@ def startgame(algorithm,humanPlayerColor,depth,ui):
 			playerStatusInput()
 			validPlayerInput(stare_curenta)
 
-			
-			myUI.drawEmptyBoard()
-			myUI.drawBoardPieces(stare_curenta.tabla_joc.board)
 			stare_curenta.j_curent = stare_curenta.jucator_opus()
 		else:
 			print("AI TURN :")
@@ -172,9 +194,10 @@ def startgame(algorithm,humanPlayerColor,depth,ui):
 				else:
 					newState = alpha_beta(-5000,5000,stare_curenta) 
 				stare_curenta.tabla_joc = newState.stare_aleasa.tabla_joc
-			myUI.drawEmptyBoard()
-			myUI.drawBoardPieces(stare_curenta.tabla_joc.board)
+
 			stare_curenta.j_curent = stare_curenta.jucator_opus()
+	
+	
 			
 	
 
@@ -183,11 +206,136 @@ def main():
 	humanPlayerColor = getHumanPlayerColorFromInput()
 	depth = getDifficultyFromInput()
 	ui = getInterfaceType()
+	global boardChanged
 	if(ui == 1):    
 		startgame(algorithm,humanPlayerColor, depth, ui)
 	else:
-		startUI()
+		screen = pygame.display.set_mode((WINDOW_HEIGHT, WINDOW_WIDTH))
+		drawEmptyBoard(screen)
+		start_time = pygame.time.get_ticks() / 1000
+		clock = pygame.time.Clock()
   
+		board = None
+		game = Joc(board)
+
+	
+		Joc.JMIN = humanPlayerColor
+		Joc.JMAX = "n" if humanPlayerColor == "a" else "a"
+		boardChanged = True
+		totalMovesHuman = 0
+		totalMovesAI = 0
+	
+		Stare.ADANCIME_MAX = depth
+		stare_curenta = Stare(game, "a", Stare.ADANCIME_MAX)
+		lastClicked = False
+		firstX = 0
+		firstY = 0
+		while True:
+			clock.tick(15)
+			
+			time = pygame.time.get_ticks() / 1000
+			elapsed = time - start_time
+			if boardChanged == True:
+				boardChanged = False
+				drawEmptyBoard(screen)
+				drawBoardPieces(stare_curenta.tabla_joc.board,screen)
+				pygame.display.update()
+			pygame.display.flip()
+			repeatInput = False
+			for event in pygame.event.get():
+				if event.type==pygame.QUIT:
+					pygame.quit()
+					sys.exit()
+				if  lastClicked == False and event.type == pygame.MOUSEBUTTONDOWN:
+					lastClicked = True
+					tmpY,tmpX = event.pos
+					firstX = int(tmpX/100)
+					firstY = int(tmpY/100)
+						
+				elif  lastClicked == True and event.type == pygame.MOUSEBUTTONDOWN :
+					realY,realX = event.pos
+					secondX = int(realX/100)
+					secondY = int(realY/100)
+					lastClicked = False
+					
+					moveSpree = True
+					moveSpreeStarted = False
+					
+					while moveSpree == True:
+						if afis_daca_final(stare_curenta):
+							break
+						printBoard(stare_curenta.tabla_joc.board)
+						moveSpree = playerHasSpreeMoves(stare_curenta.tabla_joc,stare_curenta.j_curent)
+						stare_curenta.moveSpree = moveSpree
+						if moveSpreeStarted == True and moveSpree == False:
+							break
+						moveSpreeStarted = moveSpree
+
+						print(moveSpree)
+						print("Selectati de pe ce pozitie vrei sa mutati:  ")
+						allValidMoveSets = getAllValidMovesets(stare_curenta.tabla_joc,stare_curenta.j_curent,moveSpree)
+						for pereche in allValidMoveSets.keys():
+							print(pereche, end=' ')
+						if((firstX,firstY) not in allValidMoveSets.keys()):
+							repeatInput = True
+							break
+						print()
+						print("Selecteaza linia:")
+						print((firstX,firstY))
+						startx = firstX
+		
+						print("Selecteaza coloana:")
+		
+						starty = firstY
+						
+
+						possibleHumanMoves = getSingleValidMoveset(stare_curenta.tabla_joc,startx,starty,stare_curenta.moveSpree,stare_curenta.j_curent)
+		
+						print(possibleHumanMoves)
+						if([secondX,secondY] not in possibleHumanMoves):
+							print("DADA")
+							repeatInput = True
+							break
+						print("Selectati pe ce pozitie vrei sa mutati: ")
+						print("Selecteaza linia:")
+						stopx = secondX
+						print("Selecteaza coloana:")
+						stopy = secondY
+						stare_curenta.j_curent = stare_curenta.jucator_opus()
+						updateBoard(stare_curenta.tabla_joc.board,(startx,starty),(stopx,stopy),Joc.JMIN)
+						drawEmptyBoard(screen)
+						drawBoardPieces(stare_curenta.tabla_joc.board,screen)
+						pygame.display.update()
+						if moveSpreeStarted == True and moveSpree == True:
+							repeatInput == True
+							break
+
+     
+					if(repeatInput == True):
+						continue
+  
+					print("AI TURN :")
+					moveSpree = True
+					moveSpreeStarted = False
+					
+					while moveSpree == True:
+						if afis_daca_final(stare_curenta):
+							break
+						moveSpree = playerHasSpreeMoves(stare_curenta.tabla_joc,stare_curenta.j_curent)
+						stare_curenta.moveSpree = moveSpree
+						if moveSpreeStarted == True and moveSpree == False:
+							break
+						moveSpreeStarted = moveSpree
+						if(algorithm == 1):
+							newState = min_max(stare_curenta)
+						else:
+							newState = alpha_beta(-5000,5000,stare_curenta) 
+						stare_curenta.tabla_joc = newState.stare_aleasa.tabla_joc
+						drawEmptyBoard(screen)
+						drawBoardPieces(stare_curenta.tabla_joc.board,screen)
+						pygame.display.update()
+					stare_curenta.j_curent = stare_curenta.jucator_opus()
+	
 
 if __name__ == "__main__" :
 	  main()

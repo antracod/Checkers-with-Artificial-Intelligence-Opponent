@@ -13,8 +13,10 @@ class Joc:
 	NEGRU_REGE = "N"
 	ALB = "a"
 	ALB_REGE = "A"
+	
 
 	def __init__(self, board=None):
+		self.spree_position = ()
 		if board == None:
 			self.board = []
 			for i in range(0, 8):
@@ -67,6 +69,7 @@ class Joc:
 
 		"jucator" este simbolul jucatorului care face mutarea
 		"""
+
 		moveSpree = playerHasSpreeMoves(self,playerColor)
 		allValidMoveSets = getAllValidMovesets(self,playerColor,moveSpree)
 		return allValidMoveSets
