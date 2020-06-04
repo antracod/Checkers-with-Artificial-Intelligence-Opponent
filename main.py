@@ -1,7 +1,8 @@
 from algo import *
 from ui import*
 import sys
-import pygame, sys,time
+import pygame, sys
+import time
 from pygame.locals import * 
 
 
@@ -58,7 +59,7 @@ def getDifficultyFromInput():
 		elif difficulty == "2":
 			return 4
 		elif difficulty == "3":
-			return 6
+			return 5
 		else:
 			print("Input gresit")
 			difficulty = None
@@ -103,24 +104,34 @@ def validPlayerInput(stare_curenta):
 		for pereche in allValidMoveSets.keys():
 			print(pereche, end=' ')
 	  
-		print()
-		print("Selecteaza linia:")
-	 
-		startx = int(input())
-	 
-		print("Selecteaza coloana:")
-	 
-		starty = int(input())
-	 
+		
+	
+		while True:
+			print("Selecteaza linia:")
+			startx = str(input())
+			print("Selecteaza coloana:")
+			starty = str(input())
+			if(startx.isnumeric() and starty.isnumeric()):
+				startx = int(startx)
+				starty = int(starty)
+				if (startx,starty) in allValidMoveSets.keys():
+					break
+
 		possibleHumanMoves = getSingleValidMoveset(stare_curenta.tabla_joc,startx,starty,stare_curenta.moveSpree,stare_curenta.j_curent)
 	 
 		print(possibleHumanMoves)
 	 
 		print("Selectati pe ce pozitie vrei sa mutati: ")
-		print("Selecteaza linia:")
-		stopx = int(input())
-		print("Selecteaza coloana:")
-		stopy = int(input())
+		while True:
+			print("Selecteaza linia:")
+			stopx = str(input())
+			print("Selecteaza coloana:")
+			stopy = str(input())
+			if(stopx.isnumeric() and stopy.isnumeric()):
+				stopx = int(stopx)
+				stopy = int(stopy)
+				if [stopx,stopy] in possibleHumanMoves:
+					break
 		updateBoard(stare_curenta.tabla_joc.board,(startx,starty),(stopx,stopy),Joc.JMIN)
 	
 	 		
@@ -136,7 +147,8 @@ def playerStatusInput():
 		else:
 			# --- afisam scoruri eventual
 			print("Joc anulat")
-			sys.exit(0)
+			return False
+	return True
 			
 def getInterfaceType():
 	while True:
@@ -152,6 +164,7 @@ def getInterfaceType():
 
 
 def startgame(algorithm,humanPlayerColor,depth,ui):
+	timpStartJoc = time.time()
 	board = None
 	game = Joc(board)
 	
@@ -170,16 +183,24 @@ def startgame(algorithm,humanPlayerColor,depth,ui):
 	
 	while True:
 		
-		if afis_daca_final(stare_curenta):
+		if printIfFinal(stare_curenta):
+			print("Joc finalizat in :" + str(time.time() - timpStartJoc) + " secunde")
+			print("Mutari total Alb{} si Negru{}".format(totalMovesHuman,totalMovesAI))
 			break
 
 		if stare_curenta.j_curent ==  Joc.JMIN:
-			playerStatusInput()
+			if(playerStatusInput()==False):
+				print("Mutari total Alb: {} si Negru: {}".format(totalMovesHuman,totalMovesAI))
+				print("Joc finalizat in :" + str(time.time() - timpStartJoc) + " secunde")
+				sys.exit(0)
+			tmpStartProcessHuman = time.time()
 			validPlayerInput(stare_curenta)
-
+			totalMovesHuman+=1
+			print("Jucatorul a gandit :" + str(time.time() - tmpStartProcessHuman) + " secunde")
 			stare_curenta.j_curent = stare_curenta.jucator_opus()
 		else:
 			print("AI TURN :")
+			totalMovesAI +=1
 			moveSpree = True
 			moveSpreeStarted = False
 			timpStartProcesAi = time.time()
@@ -202,11 +223,12 @@ def startgame(algorithm,humanPlayerColor,depth,ui):
 			
 
 def main():
+ 
 	algorithm = getAlgorithmFromInput()
 	humanPlayerColor = getHumanPlayerColorFromInput()
 	depth = getDifficultyFromInput()
 	ui = getInterfaceType()
-	global boardChanged
+	
 	if(ui == 1):    
 		startgame(algorithm,humanPlayerColor, depth, ui)
 	else:
@@ -219,7 +241,7 @@ def main():
 		game = Joc(board)
 
 
-	
+
 		Joc.JMIN = humanPlayerColor
 		Joc.JMAX = "n" if humanPlayerColor == "a" else "a"
 		boardChanged = True
@@ -263,7 +285,7 @@ def main():
 					moveSpreeStarted = False
 					
 					while moveSpree == True:
-						if afis_daca_final(stare_curenta):
+						if printIfFinal(stare_curenta):
 							break
 						printBoard(stare_curenta.tabla_joc.board)
 						moveSpree = playerHasSpreeMoves(stare_curenta.tabla_joc,stare_curenta.j_curent)
@@ -321,7 +343,7 @@ def main():
 					moveSpreeStarted = False
 					stare_curenta.j_curent = stare_curenta.jucator_opus()
 					while moveSpree == True:
-						if afis_daca_final(stare_curenta):
+						if printIfFinal(stare_curenta):
 							break
 						moveSpree = playerHasSpreeMoves(stare_curenta.tabla_joc,stare_curenta.j_curent)
 						stare_curenta.moveSpree = moveSpree

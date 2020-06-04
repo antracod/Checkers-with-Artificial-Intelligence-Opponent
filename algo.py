@@ -44,7 +44,7 @@ class Joc:
 
 			if finalScoreJmax == finalScoreJmin:
 				return "Joc termin cu o remiza"
-			elif finalScoreJmax > finalScoreJmax:
+			elif finalScoreJmax > finalScoreJmin:
 				return self.JMAX
 			else:
 				return self.JMIN	
@@ -61,25 +61,31 @@ class Joc:
 				elif((self.board[i][j]=="a" or self.board[i][j]=="A") ):
 					whitePiecesLeft +=1
 				if whitePiecesLeft and blackPiecesLeft:
-					return 1
+					break
+		if whitePiecesLeft == 0 or blackPiecesLeft == 0:
+			return 0
+		for i in range(0,8):
+			for j in range(0,8):
+				if(isPiece(self.board[i][j])):
+					allValidMoveSets1 = getSingleValidMoveset(self,i,j,False,self.board[i][j])
+					allValidMoveSets2 = getSingleValidMoveset(self,i,j,True,self.board[i][j])
+					if len(allValidMoveSets1) > 0  or len(allValidMoveSets2) > 0:
+						return 1		
 					
 		return 0
      
 	def mutari_joc(self, playerColor):
 		"""
-		Pentru configuratia curenta de joc "self.matr" (de tip lista, cu 9 elemente),
-		trebuie sa returnati o lista "l_mutari" cu elemente de tip Joc,
-		corespunzatoare tuturor configuratiilor-succesor posibile.
-
-		"jucator" este simbolul jucatorului care face mutarea
+		Vedem daca userul curent este intr-un movespree (poate sau a capturat o piese)
+		Returnam toate mutarile valide al acelui jucator (daca este sau nu obligat sa captureze)
 		"""
 
 		moveSpree = playerHasSpreeMoves(self,playerColor)
 		allValidMoveSets = getAllValidMovesets(self,playerColor,moveSpree)
 
 		return allValidMoveSets
-	#Mutari
-
+	
+	#Apelam mutari joc ca sa ne returneze toate mutarile valide 
 	def getAllFutureStates(self,playerColor):
 		gamesList = []
 		mutari = self.mutari_joc(playerColor)
@@ -92,14 +98,38 @@ class Joc:
 						gamesList.append(newGame)
 		return gamesList
 
-	def evaluarea_euristica_2(self):
-        # cum o piesa capata o importanta mai mare odata ce se apropie de cealalta
-        # parte a tablii de joc
-        # asociez valori diferite piesei, in functie de statusul acesteia
-        # deci, adaug pentru o piesa normala, cu cat ma apropii de marginea opusa,
-        #  nr liniei
-        # si o valoare nr total linii + 2 pentru rege (el a ajuns deja in partea opusa)
 
+	def euristicaSlaba(self):
+		#Cu cat are mai multe piese , cu atat scorul euristicii este mai mare
+		#Atribuim regelui valoare 2 si piesei normale valoarea 2
+
+		punctaj_regi_jmax = 0
+		punctaj_piese_jmax = 0
+
+		punctaj_regi_jmin = 0
+		punctaj_piese_jmin = 0
+
+		for linie in self.board: # iau fiecare linie si adaug la punctaje scorurile obtinute per linie
+			
+			punctaj_regi_jmin = punctaj_regi_jmin + 2 * linie.count(Joc.JMIN.upper())
+			punctaj_piese_jmin = punctaj_piese_jmin + linie.count(Joc.JMIN.lower())
+
+			punctaj_regi_jmax = punctaj_regi_jmax + 2 * linie.count(Joc.JMAX.upper())
+			punctaj_piese_jmax = punctaj_piese_jmax + linie.count(Joc.JMAX.lower())
+
+
+		punctaj_JMAX = punctaj_regi_jmax + punctaj_piese_jmax
+		punctaj_JMIN = punctaj_regi_jmin + punctaj_piese_jmin
+
+		# intorc diferenta dintre punctaje
+		return punctaj_JMAX - punctaj_JMIN
+    
+   
+	def euristicaOptima(self):
+		#Cu cat o piese se apropie mai mult de marginea cealalta (ataca si are potential sa fie rege)
+        #Cu atat are scor mai mare
+        #Astfel pentru ai calculam scorul pt fiecare piese fiind = nr liniei piese + (1 sau 2 in functie de rege sau pion)
+        # Include prima euristica , doar ca tine cont si de potentialul de a se transforma in rege
 		punctaj_regi_jmax = 0
 		punctaj_piese_jmax = 0
 
@@ -109,18 +139,18 @@ class Joc:
 		for i in range(Joc.NR_LINII):
 			for j in range(Joc.NR_COLOANE):
 
-				if self.board[i][j] != Joc.GOL: # daca am o piesa
+				if self.board[i][j] != Joc.GOL: 
                     
-					if self.board[i][j] == Joc.JMAX.upper(): # daca am rege
- 						punctaj_regi_jmax = punctaj_regi_jmax + Joc.NR_LINII + 1 + 1
+					if self.board[i][j] == Joc.JMAX.upper(): 
+ 						punctaj_regi_jmax = punctaj_regi_jmax + Joc.NR_LINII + 2
 
-					elif self.board[i][j] == Joc.JMAX.lower(): # am piesa simpla
+					elif self.board[i][j] == Joc.JMAX.lower(): 
 						punctaj_piese_jmax = punctaj_piese_jmax + i + 1
 
-					elif self.board[i][j] == Joc.JMIN.upper(): # daca am rege
-						punctaj_regi_jmin = punctaj_regi_jmin + Joc.NR_LINII + 1 + 1
+					elif self.board[i][j] == Joc.JMIN.upper(): 
+						punctaj_regi_jmin = punctaj_regi_jmin + Joc.NR_LINII + 2
 
-					elif self.board[i][j] == Joc.JMIN.lower(): # am piesa simpla
+					elif self.board[i][j] == Joc.JMIN.lower():
  						punctaj_piese_jmin = punctaj_piese_jmin + i + 1
 
 		punctaj_JMAX = punctaj_regi_jmax + punctaj_piese_jmax
@@ -156,19 +186,11 @@ class Joc:
 			return 0
 
 	def linii_deschise(self, jucator):
-		# return (self.linie_deschisa(self.matr[0:3],jucator)
-		#	+ self.linie_deschisa(self.matr[3:6], jucator)
-	#		+ self.linie_deschisa(self.matr[6:9], jucator)
-		#	+ self.linie_deschisa(self.matr[0:9:3], jucator)
-		#	+ self.linie_deschisa(self.matr[1:9:3], jucator)
-	#		+ self.linie_deschisa(self.matr[2:9:3], jucator)
-		#	+ self.linie_deschisa(self.matr[0:9:4], jucator) #prima diagonala
-		#	+ self.linie_deschisa(self.matr[2:8:2], jucator)) # a doua diagonala
 		return None
 	
 	
-	def fct_euristica(self):
-		return self.evaluarea_euristica_2()
+	def chooseEuristic(self):
+		return self.euristicaOptima()
 
 	def estimeaza_scor(self, adancime, playerColor):
 		t_final = self.final(self)
@@ -179,7 +201,7 @@ class Joc:
 		elif t_final == 'remiza':
 			return 0
 		else:
-			return self.fct_euristica()
+			return self.chooseEuristic()
 
 	def finalScore(self, playerColor):
 		finalscr = 0
@@ -346,7 +368,7 @@ def alpha_beta(alpha, beta, stare):
 
 
 
-def afis_daca_final(stare_curenta):
+def printIfFinal(stare_curenta):
 	final = stare_curenta.tabla_joc.final(stare_curenta.j_curent)
 	if(final):
 		if (final == "remiza"):
@@ -354,6 +376,9 @@ def afis_daca_final(stare_curenta):
 		else:
 			#CaLCUL PUNCTAJ
 			print("A castigat " + final)
+			print("Scor Jucator{}".format(stare_curenta.tabla_joc.finalScore(stare_curenta.tabla_joc.JMIN)))
+			print("Scor AI{}".format(stare_curenta.tabla_joc.finalScore(stare_curenta.tabla_joc.JMAX)))
+			
 		return True
 
 	return False
@@ -413,7 +438,6 @@ def getMoveset(playercolor):
 def hasSpreeMove(currentBoard,i,j,playerColor):
     moveSet = getMoveset(currentBoard.board[i][j])
     
-
     for m in moveSet:
         simpleJumpI = i+m[0]
         simpleJumpJ = j+m[1]
